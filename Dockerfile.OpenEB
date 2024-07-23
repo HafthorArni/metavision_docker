@@ -1,0 +1,76 @@
+# This is the command to build the Docker image for Ubuntu 22.04
+# 'docker build --build-arg UBUNTU_VERSION=22.04 -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .'
+
+ARG UBUNTU_VERSION
+FROM ubuntu:${UBUNTU_VERSION}
+
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV TZ="Europe/Paris"
+
+# Install dependencies
+RUN apt-get update && apt-get -y install \
+    apt-utils \
+    build-essential \
+    software-properties-common \
+    wget \
+    unzip \
+    curl \
+    git \
+    cmake \
+    libopencv-dev \
+    libboost-all-dev \
+    libusb-1.0-0-dev \
+    libprotobuf-dev \
+    protobuf-compiler \
+    libhdf5-dev \
+    hdf5-tools \
+    libglew-dev \
+    libglfw3-dev \
+    libcanberra-gtk-module \
+    ffmpeg \
+    libgtest-dev \
+    libgmock-dev \
+    python3-pip \
+    python3-distutils \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pip dependencies
+RUN python3 -m pip install pip --upgrade \
+    && python3 -m pip install "opencv-python==4.5.5.64" "sk-video==1.1.10" "fire==0.4.0" "numpy==1.23.4" "h5py==3.7.0" \
+        pandas scipy jupyter jupyterlab matplotlib "ipywidgets==7.6.5" pytest command_runner "numba==0.56.3" \
+        "profilehooks==1.12.0" "pytorch_lightning==1.8.6" "tqdm==4.63.0" "kornia==0.6.8" scikit-image \
+    && rm -rf ~/.cache/pip/*
+
+# Pybind11
+RUN wget -O /tmp/pybind11.zip https://github.com/pybind/pybind11/archive/v2.6.0.zip \
+    && unzip /tmp/pybind11.zip -d /opt \
+    && cmake -S /opt/pybind11-2.6.0 -B /tmp/pybind11_build -DPYBIND11_TEST=OFF \
+    && cmake --build /tmp/pybind11_build --target install -j`nproc` \
+    && rm -rf /tmp/pybind11*
+
+RUN git clone https://github.com/prophesee-ai/openeb.git --branch 4.6.2 \
+    && cd openeb \
+    && mkdir build \
+    && cd build \
+    && cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+    && cmake --build . --config Release -- -j `nproc` \
+    && cmake --build . --target install
+
+# Update environment variables
+RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> /etc/bash.bashrc \
+    && echo 'export HDF5_PLUGIN_PATH=/usr/local/hdf5/lib/plugin:$HDF5_PLUGIN_PATH' >> /etc/bash.bashrc \
+    && echo 'export PYTHONPATH=/usr/local/local/lib/python3.10/dist-packages:/openeb/sdk/modules/core/python/pypkg:$PYTHONPATH' >> /etc/bash.bashrc
+
+# Source the updated environment variables
+RUN /bin/bash -c "source /etc/bash.bashrc"
+
+# Clone the underwater_evk_recording repository
+RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/underwater_evk_recording
+
+# Set the working directory
+WORKDIR /opt/underwater_evk_recording
+
+# Start a shell
+CMD ["/bin/bash"]
+
