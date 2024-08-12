@@ -1,18 +1,31 @@
 # OpenEB Docker Setup
 
+User needs to be in docker group
+
 ## Build
 
 ```bash
-sudo docker build --build-arg UBUNTU_VERSION=22.04 -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .
+docker build -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .
 ```
 ## Run
 
+This runs the recording program
+
 ```bash
-sudo docker run -ti --privileged -v /dev/bus/usb:/dev/bus/usb -e DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix/ --rm --net=host openeb:ubuntu-22.04 /bin/bash
+docker run --privileged -v /dev/bus/usb:/dev/bus/usb --rm --net=host openeb:ubuntu-22.04  
 ```
 
-## inside container run
+## Service
+
+To run automatically on startup of machine place service file in `/etc/systemd/system/`
 
 ```bash
-python3 recordFromEVK4.py -b custom_biases/unnar_settings.bias
+sudo systemctl enable openeb-docker.service
+sudo systemctl start openeb-docker.service
+
+# see status
+sudo systemctl status openeb-docker.service
+
+# see if run on startup
+sudo reboot
 ```

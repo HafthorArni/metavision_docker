@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Event Camera
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/docker run --privileged -v /dev/bus/usb:/dev/bus/usb --rm --net=host openeb:ubuntu-22.04  
+ExecStop=/usr/bin/docker stop openeb
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,6 @@
-# This is the command to build the Docker image for Ubuntu 22.04
-# 'docker build --build-arg UBUNTU_VERSION=22.04 -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .'
+# 'docker build -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .'
 
-ARG UBUNTU_VERSION
-FROM ubuntu:${UBUNTU_VERSION}
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV TZ="Europe/Paris"
@@ -71,6 +69,8 @@ RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/u
 # Set the working directory
 WORKDIR /opt/underwater_evk_recording
 
-# Start a shell
-CMD ["/bin/bash"]
+ENV PYTHONPATH="/usr/local/local/lib/python3.10/dist-packages:/openeb/sdk/modules/core/python/pypkg:"
+ENV LD_LIBRARY_PATH="/usr/local/lib:"
+ENV HDF5_PLUGIN_PATH="/usr/local/hdf5/lib/plugin:/usr/local/hdf5/lib/plugin:"
 
+CMD ["python3", "recordFromEVK4.py", "-b", "custom_biases/unnar_settings.bias"]
