@@ -64,7 +64,10 @@ RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> /etc/bash.b
 RUN /bin/bash -c "source /etc/bash.bashrc"
 
 # Clone the underwater_evk_recording repository
-RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/underwater_evk_recording
+RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/underwater_evk_recording \
+	&& cd /opt/underwater_evk_recording \
+	&& git checkout development \
+	&& git pull origin development
 
 # Set the working directory
 WORKDIR /opt/underwater_evk_recording
