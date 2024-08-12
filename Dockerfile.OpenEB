@@ -57,20 +57,25 @@ RUN git clone https://github.com/prophesee-ai/openeb.git --branch 4.6.2 \
     && cmake --build . --config Release -- -j `nproc` \
     && cmake --build . --target install
 
-# Update environment variables
-RUN echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> /etc/bash.bashrc \
-    && echo 'export HDF5_PLUGIN_PATH=/usr/local/hdf5/lib/plugin:$HDF5_PLUGIN_PATH' >> /etc/bash.bashrc \
-    && echo 'export PYTHONPATH=/usr/local/local/lib/python3.10/dist-packages:/openeb/sdk/modules/core/python/pypkg:$PYTHONPATH' >> /etc/bash.bashrc
+# Set environment variables
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+ENV HDF5_PLUGIN_PATH=/usr/local/hdf5/lib/plugin:$HDF5_PLUGIN_PATH
+ENV PYTHONPATH=/usr/local/lib/python3.10/dist-packages:/openeb/sdk/modules/core/python/pypkg:$PYTHONPATH
 
-# Source the updated environment variables
-RUN /bin/bash -c "source /etc/bash.bashrc"
 
 # Clone the underwater_evk_recording repository
-RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/underwater_evk_recording
-
+RUN git clone https://github.com/KrissiKodar/underwater_evk_recording.git /opt/underwater_evk_recording \
+	&& cd /opt/underwater_evk_recording \
+	&& git checkout development \
+	&& git pull origin development
+	
 # Set the working directory
 WORKDIR /opt/underwater_evk_recording
 
-# Start a shell
-CMD ["/bin/bash"]
+# Add a custom startup script
+COPY startup.sh /opt/underwater_evk_recording/startup.sh
+RUN chmod +x startup.sh
+
+# Start the custom startup script
+CMD ["/opt/underwater_evk_recording/startup.sh"]
 
