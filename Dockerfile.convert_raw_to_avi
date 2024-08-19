@@ -1,5 +1,4 @@
-# 'docker build -f Dockerfile.OpenEB -t openeb:ubuntu-22.04 .'
-
+# Base Dockerfile for running the recording software
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND="noninteractive"
@@ -68,4 +67,11 @@ ENV PYTHONPATH="/usr/local/local/lib/python3.10/dist-packages:/openeb/sdk/module
 ENV LD_LIBRARY_PATH="/usr/local/lib:"
 ENV HDF5_PLUGIN_PATH="/usr/local/hdf5/lib/plugin:/usr/local/hdf5/lib/plugin:"
 
-CMD ["python3", "recordFromEVK4.py", "-b", "custom_biases/unnar_settings.bias"]
+# Copy the conversion script into the container
+COPY convert_raw_to_avi.sh /opt/convert_raw_to_avi.sh
+
+# Make the script executable
+RUN chmod +x /opt/convert_raw_to_avi.sh
+
+# Set the default command to convert .raw files to .avi in a specified directory
+CMD ["/opt/convert_raw_to_avi.sh", "/mnt/sandisk/recordings"]
